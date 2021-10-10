@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.itcast.dao.AddressDao">
+    <insert id="add" parameterType="cn.itcast.pojo.Address">
+        insert into t_address values(null,#{code},#{name},#{address},#{detail},#{coordinate},#{enable})
+    </insert>
+    <select id="findAll" resultType="cn.itcast.pojo.Address">
+        select * from t_address
+    </select>
+</mapper>

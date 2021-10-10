@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.itcast.dao.ReportDao">
+
+
+    <select id="findMemberStatistics" resultType="java.util.Map">
+        SELECT
+            ymv.YEAR_MONTH months,
+            IFNULL( p1.m_count, 0 ) memberCount
+        FROM
+            year_month_view ymv
+                LEFT JOIN (
+                SELECT
+                    DATE_FORMAT( regTime, "%Y-%m" ) yearMonth,
+                    count(*) m_count
+                FROM
+                    t_member
+                WHERE
+                    regTime > DATE_FORMAT( DATE_SUB( curdate(), INTERVAL 11 MONTH ), "%Y-%m" )
+                GROUP BY
+                    yearMonth
+            ) p1 ON p1.yearMonth = ymv.YEAR_MONTH
+        GROUP BY
+            ymv.YEAR_MONTH
+        ORDER BY
+            ymv.YEAR_MONTH
+
+    </select>
+    <!-- setmealCount setmealNames-->
+    <select id="findSetmealStatistics" resultType="java.util.Map">
+        SELECT
+            count(*) value,
+            s.NAME name
+        FROM
+            t_setmeal s,
+            t_order o
+        WHERE
+            s.id = o.setmealId
+        GROUP BY
+            s.id
+    </select>
+    <select id="findIncomeStatistics" resultType="java.util.Map">
+        SELECT
+            ymv.YEAR_MONTH months,
+            IFNULL( p1.m_sum, 0 ) moneySum
+        FROM
+            year_month_view ymv
+                LEFT JOIN (
+                SELECT
+                    DATE_FORMAT( payTime, "%Y-%m" ) yearMonth,
+                    sum( money ) m_sum
+                FROM
+                    t_paylog
+                WHERE
+                    payTime > DATE_FORMAT( DATE_SUB( curdate(), INTERVAL 11 MONTH ), "%Y-%m" )
+                GROUP BY
+                    yearMonth
+                ORDER BY
+                    payTime
+            ) p1 ON p1.yearMonth = ymv.YEAR_MONTH
+        GROUP BY
+            ymv.YEAR_MONTH
+        ORDER BY
+            ymv.YEAR_MONTH
+    </select>
+    <select id="findOrderCountStastics" resultType="java.util.Map">
+        SELECT
+            ymv.YEAR_MONTH months,
+            IFNULL( p1.m_count, 0 ) orderCount,
+            IFNULL( p2.m_count, 0 ) payCount
+        FROM
+            year_month_view ymv
+                LEFT JOIN (
+                SELECT
+                    DATE_FORMAT( orderDate, "%Y-%m" ) yearMonth,
+                    count(*) m_count
+                FROM
+                    t_order
+                WHERE
+                    orderDate > DATE_FORMAT( DATE_SUB( curdate(), INTERVAL 11 MONTH ), "%Y-%m" )
+                GROUP BY
+                    yearMonth
+            ) p1 ON p1.yearMonth = ymv.YEAR_MONTH
+                LEFT JOIN (
+                SELECT
+                    DATE_FORMAT( orderDate, "%Y-%m" ) yearMonth,
+                    count(*) m_count
+                FROM
+                    t_order
+                WHERE
+                    orderDate > DATE_FORMAT( DATE_SUB( curdate(), INTERVAL 11 MONTH ), "%Y-%m" )
+                  AND payStatus = 1
+                GROUP BY
+                    yearMonth
+            ) p2 ON p2.yearMonth = ymv.YEAR_MONTH
+        GROUP BY
+            ymv.YEAR_MONTH
+        ORDER BY
+            ymv.YEAR_MONTH
+    </select>
+    <select id="findCountStastics" resultType="cn.itcast.vo.ReportData">
+        SELECT
+            *
+        FROM
+            (
+                SELECT
+                    count(*) todayNewMember
+                FROM
+                    t_member
+                WHERE
+                    regTime = curdate()) p1,
+            ( SELECT count(*) totalMember FROM t_member ) p2,
+            (
+                SELECT
+                    COUNT(*) thisWeekNewMember
+                FROM
+                    t_member
+                WHERE
+                    MONTH ( regTime ) = MONTH (
+                    CURDATE())
+                  AND WEEK ( regTime ) = WEEK (
+                    CURDATE())) p3,
+            (
+                SELECT
+                    count(*) thisMonthNewMember
+                FROM
+                    t_member
+                WHERE
+                    MONTH ( regTime ) = MONTH (
+                    curdate())
+                  AND YEAR ( regTime ) = YEAR (
+                    curDate())) p4,
+            (
+                SELECT
+                    count(*) todayOrderNumber
+                FROM
+                    t_order
+                WHERE
+                    orderDate = curdate()) p5,
+            ( SELECT count(*) todayVisitsNumber FROM t_order WHERE orderDate = curdate() AND orderStatus = 1 ) p6,
+            (
+                SELECT
+                    count(*) thisWeekOrderNumber
+                FROM
+                    t_order
+                WHERE
+                    MONTH ( orderDate ) = MONTH (
+                    CURDATE())
+                  AND WEEK ( orderDate ) = WEEK (
+                    CURDATE())) p7,
+            (
+                SELECT
+                    count(*) thisWeekVisitsNumber
+                FROM
+                    t_order
+                WHERE
+                    MONTH ( orderDate ) = MONTH (
+                    CURDATE())
+                  AND WEEK ( orderDate ) = WEEK (
+                    CURDATE())
+                  AND orderStatus = 1
+            ) p8,
+            (
+                SELECT
+                    count(*) thisMonthOrderNumber
+                FROM
+                    t_order
+                WHERE
+                    MONTH ( orderDate ) = MONTH (
+                    curdate())
+                  AND YEAR ( orderDate ) = YEAR (
+                    curDate())) p9,
+            (
+                SELECT
+                    count(*) thisMonthVisitsNumber
+                FROM
+                    t_order
+                WHERE
+                    MONTH ( orderDate ) = MONTH (
+                    curdate())
+                  AND YEAR ( orderDate ) = YEAR (
+                    curDate())
+                  AND orderStatus = 1
+            ) p10
+    </select>
+    <select id="findHotSetmealStastics" resultType="java.util.Map">
+        SELECT
+            s.NAME name,
+            count( o.id ) setmeal_count,
+            TRUNCATE ( count( o.id )/ o2.count, 4 ) proportion
+        FROM
+            t_order o,
+            t_setmeal s,(
+                SELECT
+                    count(*) count
+                FROM
+                    t_order
+            ) o2
+        WHERE
+            s.id = o.setmealId
+        GROUP BY
+            s.NAME
+
+    </select>
+
+</mapper>

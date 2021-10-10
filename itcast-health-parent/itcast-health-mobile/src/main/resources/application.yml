@@ -1,0 +1,25 @@
+server:
+  port: 9100
+spring:
+  application:
+    name: itcast-health-mobile
+  redis:
+    host: 192.168.31.81
+#  redis:
+#    cluster:
+#      nodes: 192.168.31.81:6379,192.168.31.81:6380,192.168.31.81:6381
+#    host: 192.168.31.81
+dubbo:
+  application:
+    name: itcast-health-mobile
+  registry:
+    address: zookeeper://192.168.31.81:2181
+    client: zkclient
+    timeout: 60000
+  consumer:
+    timeout: 60000
+  scan:
+    base-packages: cn.itcast
+wx:
+  pay:
+    notify_url: http://dwxw.vip.aeert.com/pay/notify

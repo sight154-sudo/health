@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.itcast.dao.OrderSettingDao">
+
+    <!--添加数据-->
+    <update id="updateByDate" parameterType="orderSetting">
+        insert into t_ordersetting values (null,#{orderDate},#{number},#{reservations})
+    </update>
+    <!--进行修改-->
+    <update id="update">
+        update t_ordersetting set number = #{number} where orderDate = #{orderDate}
+    </update>
+    <!--根据时间进行修改-->
+    <update id="updateByTime">
+        update t_ordersetting set number = #{number} where orderDate = #{date}
+    </update>
+
+
+
+    <!--根据月份进行查询-->
+    <select id="findOrderSettingsByMonth" resultType="java.util.Map">
+        SELECT DAY(orderDate) date,number,reservations from t_ordersetting WHERE orderDate &gt;= #{minDay} and orderDate &lt;= #{maxDay}
+    </select>
+    <!--根据日期对象-->
+    <select id="findOrderSetting" resultType="cn.itcast.pojo.OrderSetting">
+        select * from t_ordersetting where orderDate = #{orderDate}
+    </select>
+    <!--根据预约时间查询当日预约量-->
+    <select id="findOrderSettingByOrderDate" resultType="cn.itcast.pojo.OrderSetting">
+            select number,reservations from t_ordersetting where orderDate=#{orderDate}
+    </select>
+
+
+</mapper>

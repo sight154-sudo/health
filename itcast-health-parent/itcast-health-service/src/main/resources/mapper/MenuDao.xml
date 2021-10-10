@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="cn.itcast.dao.MenuDao">
+    <!--封装子菜单集合-->
+    <resultMap id="menuChildren" type="menu" autoMapping="true">
+        <id property="id" column="id"/>
+        <collection property="children"
+                    javaType="list"
+                    ofType="menu"
+                    column="id"
+                    select="cn.itcast.dao.MenuDao.selectByParentMenuId">
+        </collection>
+    </resultMap>
+    <insert id="add" parameterType="menu" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into t_menu
+        values (null, #{name}, #{linkUrl}, #{priority}, #{icon}, #{description}, #{parentMenuId}, #{level})
+    </insert>
+
+    <!--编辑菜单-->
+    <update id="update" parameterType="menu">
+        update t_menu
+        <set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="linkUrl != null">
+                linkUrl = #{linkUrl},
+            </if>
+            <if test="priority != null">
+                priority = #{priority},
+            </if>
+            <if test="icon != null">
+                icon = #{icon},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="parentMenuId != null">
+                parentMenuId = #{parentMenuId},
+            </if>
+            <if test="level != null">
+                level = #{level},
+            </if>
+        </set>
+        where id = #{id}
+
+    </update>
+
+
+    <delete id="deleteMenu">
+        delete
+        from t_menu
+        where id = #{id}
+    </delete>
+
+
+    <!--删除菜单权限-->
+    <delete id="deleteMenuPermissions" parameterType="integer">
+        delete
+        from t_menu_permission
+        where menu_id = #{id}
+    </delete>
+
+    <!--添加菜单权限-->
+    <insert id="addMenuPermissions">
+        insert into t_menu_permission values
+        <foreach collection="permissionIds" item="permissionId" separator=",">
+            (#{menuId}, #{permissionId})
+        </foreach>
+    </insert>
+
+    <!--查询传递的父级菜单id 查询 子级菜单-->
+    <select id="selectByParentMenuId" resultType="menu">
+        select *
+        from t_menu
+        where parentMenuId = #{id};
+    </select>
+    <!--分页按条件查询父级菜单 返回父 子菜单-->
+    <select id="selectByPage" resultMap="menuChildren">
+        select *
+        from t_menu
+        <where>
+            parentMenuId = 0
+            <if test="value != null and value.length > 0">
+                and `name` = '${value}'
+            </if>
+        </where>
+    </select>
+
+    <!--查询所有菜单项-->
+    <select id="findAll" resultType="menu">
+        select *
+        from t_menu;
+    </select>
+    <!--查询单个菜单项-->
+    <select id="findById" parameterType="integer" resultType="menu">
+        select *
+        from t_menu
+        where id = #{id};
+    </select>
+    <select id="findPermissionsById" resultType="integer">
+        select permission_id
+        from t_menu_permission
+        where menu_id = #{id};
+    </select>
+    <!--查询菜单是否关联角色 聚合-->
+    <select id="findRoleAssociateCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_role_menu
+        where menu_id = #{menuId}
+    </select>
+    <!--查询用户菜单列表-->
+    <select id="findUserMenus" resultMap="menuChildren">
+        select *
+        from t_menu
+        where parentMenuId = 0 and id in (
+            select menu_id
+            from t_role_menu
+            where role_id in (
+                select role_id
+                from t_user_role
+                where user_id = #{id}
+            )
+        )
+        order by priority;
+    </select>
+</mapper>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="cn.itcast.dao.UserDao">
+    <!--插入用户 返回主键-->
+    <insert id="add" parameterType="user" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into t_user values (null, #{birthday}, #{gender}, #{username}, #{password}, #{remark}, #{telephone}, #{station})
+    </insert>
+    <!--添加用户所属角色到t_user_role中间表-->
+    <insert id="addUserRoles" parameterType="int">
+        insert into t_user_role values (#{userId}, #{roleId})
+    </insert>
+    <update id="update" parameterType="user">
+        update t_user
+        <set>
+            <if test="birthday != null">
+                birthday = #{birthday},
+            </if>
+            <if test="gender != null">
+                gender = #{gender},
+            </if>
+            <if test="username != null">
+                username = #{username},
+            </if>
+            <if test="password != null">
+                password = #{password},
+            </if>
+            <if test="remark != null">
+                remark = #{remark},
+            </if>
+            <if test="telephone != null">
+                telephone = #{telephone},
+            </if>
+            <if test="station != null">
+                station = #{station},
+            </if>
+        </set>
+        where id = #{id}
+
+    </update>
+    <delete id="deleteUserRoles" parameterType="int">
+        delete from t_user_role where user_id = #{userId}
+    </delete>
+    <!--删除单条数据 通过id-->
+    <delete id="deleteById" parameterType="int">
+        delete from t_user where id = #{id}
+    </delete>
+
+
+    <!--查找全部数据-->
+    <select id="findAll" resultType="user">
+        select *
+        from t_user;
+    </select>
+    <!--按照条件分页查询(用户名)-->
+    <select id="selectByCondition" parameterType="string" resultType="user">
+        select * from t_user
+        <where>
+            <if test="value!=null and value.length > 0">
+                and username = '${value}'
+            </if>
+        </where>
+    </select>
+    <select id="findById" parameterType="int" resultType="user">
+        select *
+        from t_user
+        where id = #{id}
+    </select>
+    <select id="findRoleIdsByUserId" parameterType="int" resultType="integer">
+        select role_id
+        from t_user_role
+        where user_id = #{userId};
+    </select>
+    <select id="findUserByUsername" resultType="cn.itcast.pojo.User" parameterType="string">
+        select *
+        from t_user
+        where username = #{username}
+    </select>
+</mapper>

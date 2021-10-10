@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="cn.itcast.dao.PermissionDao">
+    <!--添加权限-->
+    <insert id="addPermission" parameterType="permission">
+        insert into t_permission
+        values (null, #{name}, #{keyword}, #{description});
+    </insert>
+    <!--编辑权限-->
+    <update id="editPermission" parameterType="permission">
+        update t_permission
+        <set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="keyword != null">
+                keyword = #{keyword},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+    <!--删除权限-->
+    <delete id="deletePermission">
+        delete from t_permission where id =#{id}
+    </delete>
+    <!--查找全部数据-->
+    <select id="findAll" resultType="permission">
+        select *
+        from t_permission;
+    </select>
+    <!--SELECT * FROM  t_permission WHERE id IN (SELECT permission_id FROM t_menu_permission WHERE menu_id IN (7,8))-->
+    <select id="findMenuAssociationPermission" resultType="permission">
+        select *
+        from t_permission
+        where id in
+        (select permission_id from t_menu_permission where menu_id in
+        <foreach collection="menuIds" item="menuId" open="(" separator="," close=")">
+            #{menuId}
+        </foreach>)
+    </select>
+    <select id="findByPage" resultType="permission">
+        select *
+        from t_permission
+        <where>
+            <if test="value != null and value.length > 0">
+                and name like "%"#{value}"%" or keyword like "%"#{value}"%"
+            </if>
+        </where>
+    </select>
+    <select id="findById" resultType="cn.itcast.pojo.Permission">
+        select *
+        from t_permission
+        where id = #{id}
+    </select>
+    <select id="findMenusByPermissionId" resultType="java.lang.Integer">
+        select count(1)
+        from t_menu_permission
+        where permission_id = #{id}
+    </select>
+    <select id="findRolesByPermissionId" resultType="java.lang.Integer">
+        select count(1)
+        from t_role_permission
+        where permission_id = #{id}
+    </select>
+
+</mapper>

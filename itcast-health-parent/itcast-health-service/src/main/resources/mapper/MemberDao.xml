@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.itcast.dao.MemberDao">
+
+
+    <!--添加-->
+    <insert id="add" parameterType="member">
+        insert into t_member(id,fileNumber,name,sex,idCard,phoneNumber,regTime,password,email,birthday,remark,status)
+        values (null, #{fileNumber}, #{name}, #{sex}, #{idCard}, #{phoneNumber}, #{regTime}, #{password}, #{email},
+                #{birthday}, #{remark},#{status})
+    </insert>
+    <update id="updateMember">
+        update t_member
+        <set>
+            <if test="fileNumber!=null">
+                fileNumber=#{fileNumber},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="sex != null">
+                sex=#{sex},
+            </if>
+            <if test="idCard!=null">
+                idCard=#{idCard},
+            </if>
+            <if test="phoneNumber!=null">
+                phoneNumber=#{phoneNumber},
+            </if>
+            <if test="email!=null">
+                email=#{email},
+            </if>
+            <if test="birthday!=null">
+                birthday=#{birthday},
+            </if>
+            <if test="remark!=null">
+                remark=#{remark},
+            </if>
+            <if test="status!=null">
+                status=#{status}
+            </if>
+        </set>
+        where id=#{id}
+    </update>
+    <update id="updateStatus">
+        update t_member set status=#{status} where id=#{id}
+    </update>
+    <!--查询所有-->
+    <select id="SelectAll" parameterType="string" resultType="cn.itcast.pojo.Member">
+        select id, fileNumber, name, sex, phoneNumber, regTime,status
+        from t_member
+        <where>
+            <if test="value != null and value.length > 0">
+                and fileNumber like "%"#{value}"%" or name like "%"#{value}"%" or phoneNumber like "%${value}%"
+            </if>
+        </where>
+    </select>
+    <!--根据id查询-->
+    <select id="findById" parameterType="int" resultType="cn.itcast.pojo.Member">
+        select name,
+               id,
+               phoneNumber,
+               sex,
+               birthday,
+               fileNumber,
+               idCard,
+               email,
+               remark
+        from t_member
+        where #{id} = id
+    </select>
+    <!--根据手机号查询会员是否存在-->
+    <select id="findByPhoneNumber" resultType="cn.itcast.pojo.Member">
+      select * from  t_member where phoneNumber = #{phone}
+    </select>
+
+
+</mapper>

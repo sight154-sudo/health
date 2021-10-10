@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- 页面meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>传智健康</title>
+    <meta name="description" content="传智健康">
+    <meta name="keywords" content="传智健康">
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../plugins/elementui/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <!-- 引入组件库 -->
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script src="../plugins/elementui/vue.js"></script>
+    <script src="../plugins/elementui/index.js"></script>
+    <script src="../js/axios-0.18.0.js"></script>
+    <script type="text/javascript"
+            src="http://api.map.baidu.com/api?v=3.0&ak=Gf9UzoVK37p46ItfccwStj5dCf1qGjCT"></script>
+    <style>
+        .datatable {
+            position: relative;
+            box-sizing: border-box;
+            -webkit-box-flex: 1;
+            width: 100%;
+            max-width: 100%;
+            font-size: 14px;
+            color: rgb(96, 98, 102);
+            overflow: hidden;
+            flex: 1 1 0%;
+        }
+
+        .datatable td, .datatable th {
+            padding: 12px 0;
+            min-width: 0;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+            position: relative;
+            text-align: left;
+        }
+    </style>
+
+
+
+</head>
+<body class="hold-transition">
+<div id="app">
+    <div class="content-header">
+        <h1>工作台
+            <small>分院管理</small>
+        </h1>
+        <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>工作台</el-breadcrumb-item>
+            <el-breadcrumb-item>分院管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+    <div class="app-container">
+        <div class="box">
+            <div class="filter-container">
+                <el-button type="primary" class="butT" @click="handleCreate()">新建</el-button>
+            </div>
+            <el-table size="small" current-row-key="id" :data="dataList" stripe highlight-current-row>
+                <el-table-column type="index" align="center" label="序号"></el-table-column>
+                <el-table-column prop="code" label="分院编码" align="center"></el-table-column>
+                <el-table-column prop="name" label="分院名称" align="center"></el-table-column>
+                <el-table-column prop="coordinate" label="分院坐标" align="center"></el-table-column>
+                <el-table-column prop="enable" label="是否启用" align="center">
+                    <template slot-scope="scope">
+                        <el-switch
+                                v-model="scope.row.enable"
+                                inactive-color="red"
+                                inactive-text="未启用"
+                                :inactive-value="0"
+
+                                active-color="green"
+                                active-text="启用"
+                                :active-value="1"
+                                @change="editByEnable(scope.row)">
+                        </el-switch>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" align="center">
+                    <template slot-scope="scope">
+                        <el-button type="primary" size="mini" @click="handleUpdate(scope.row)">编辑</el-button>
+                        <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+            <!-- 新增标签弹层 -->
+            <div class="add-form">
+                <el-dialog title="新增地址" :visible.sync="dialogFormVisible" @opened="initMap1()">
+                    <el-form ref="dataAddForm" label-position="right" label-width="100px">
+                        <el-row>
+                            <el-col :span="12">
+                                <el-form-item label="分院编码" prop="code">
+                                    <el-input v-model="formData.code"/>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="分院名称" prop="name">
+                                    <el-input v-model="formData.name"/>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="12">
+                                <el-form-item label="分院坐标" prop="coordinate">
+                                    <el-input v-model="formData.coordinate" readonly/>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="是否启用" prop="enable">
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    <el-radio v-model="formData.enable" :label="1">启用</el-radio>
+                                    <el-radio v-model="formData.enable" :label="0">禁用</el-radio>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="12">
+                                <el-form-item label="输入地址">
+                                    <el-select
+                                            v-model="formData.address"
+                                            filterable
+                                            remote
+                                            reserve-keyword
+                                            placeholder="请输入地址"
+                                            :remote-method="searchMap"
+                                            @change="resetMap">
+
+                                        <el-option
+                                                v-for="item in addressList"
+                                                :label="item.address"
+                                                :value="item">
+                                        </el-option>
+                                    </el-select>
+
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="详细地址">
+                                    <el-input v-model="formData.detail"/>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="24" style="height: 200px;">
+                                <div id="allmap1" style="margin: auto;height: 100%;width: 90%"></div>
+                            </el-col>
+                        </el-row>
+                    </el-form>
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="dialogFormVisible = false">取消</el-button>
+                        <el-button type="primary" @click="handleSubmit()">确定</el-button>
+                    </div>
+                </el-dialog>
+            </div>
+
+            <!-- 修改标签弹层 -->
+            <div class="update-form">
+                <el-dialog title="修改地址" :visible.sync="updateFormVisible" @opened="initMap2()">
+                    <el-form ref="dataUpdateForm" label-position="right" label-width="100px">
+                        <el-row>
+                            <el-col :span="12">
+                                <el-form-item label="分院编码" prop="code">
+                                    <el-input v-model="formData.code"/>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="分院名称" prop="name">
+                                    <el-input v-model="formData.name"/>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="12">
+                                <el-form-item label="分院坐标" prop="coordinate">
+                                    <el-input v-model="formData.coordinate" readonly/>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="是否启用" prop="enable">
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    <el-radio v-model="formData.enable" :label="1">启用</el-radio>
+                                    <el-radio v-model="formData.enable" :label="0">禁用</el-radio>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="12">
+                                <el-form-item label="输入地址">
+                                    <el-select
+                                            v-model="formData.address"
+                                            filterable
+                                            remote
+                                            reserve-keyword
+                                            placeholder="请输入地址"
+                                            :remote-method="searchMap"
+                                            @change="resetMap">
+
+                                        <el-option
+                                                v-for="item in addressList"
+                                                :label="item.address"
+                                                :value="item">
+                                        </el-option>
+                                    </el-select>
+
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12">
+                                <el-form-item label="详细地址">
+                                    <el-input v-model="formData.detail"/>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                        <el-row>
+                            <el-col :span="24" style="height: 200px;">
+                                <div id="allmap2" style="margin: auto;height: 100%;width: 90%"></div>
+                            </el-col>
+                        </el-row>
+                    </el-form>
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="updateFormVisible = false">取消</el-button>
+                        <el-button type="primary" @click="handleEdit()">确定</el-button>
+                    </div>
+                </el-dialog>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+    var vue = new Vue({
+        el: '#app',
+        data: {
+            addressList: [],
+            dataList: [],//列表数据
+            formData: {},//表单数据
+            tableData: [],//新增和编辑表单中对应的检查项列表数据
+            dialogFormVisible: false,//控制添加窗口显示/隐藏
+            updateFormVisible: false,//控制添加窗口显示/隐藏
+        },
+        created() {
+            this.findPage();
+        },
+        methods: {
+            editByEnable(row){
+                console.log(row);
+                //发送ajax请求完成更新
+                axios.get("/address/editByEnable/"+row.id+"/"+row.enable).then(response => {
+                    if (response.data.flag) {
+                        this.$message.success(response.data.message);
+                        return;
+                    }
+                    this.$message.error(response.data.message);
+                })
+            },
+
+            //分页查询
+            findPage() {
+                //发送异步请求
+                var url = "/address/findAll";
+                axios.get(url).then(response => {
+                    if (response.data.flag) {
+                        this.dataList = response.data.data;
+                        return;
+                    }
+                    this.$message.error(response.data.message);
+                })
+            },
+
+            //地图搜索
+            searchMap(addressname){
+                var options = {
+                    onSearchComplete: function (results){
+                        //定义vue变量
+                        //vue.addressList=[];
+                        var s=[];
+                        //判断默认状态是否正确
+                        if (local.getStatus()==BMAP_STATUS_SUCCESS){
+                            for (let i = 0; i <results.getCurrentNumPois(); i++) {
+                                let addr={
+                                    address: results.getPoi(i).address,
+                                    point: results.getPoi(i).point
+                                }
+                                s.push(addr);
+                            }
+                            vue.addressList=s;
+                        }
+                    }
+                };
+                var local = new BMap.LocalSearch(map,options);
+                local.search(addressname);
+                /*//检索参数
+                var options = {
+                    onSearchComplete: function (results) {
+                        console.log(results);
+                        if (local.getStatus() == BMAP_STATUS_SUCCESS) {
+                            // 判断状态是否正确
+                            var s = [];
+                            for (var i = 0; i < results.getCurrentNumPois(); i++) {
+                                let addr = {
+                                    address: results.getPoi(i).address,
+                                    point: results.getPoi(i).point
+                                }
+
+                                s.push(addr);
+                            }
+                            vue.addressList = s;
+                        }
+                    }
+                };
+                var local = new BMap.LocalSearch(map, options);
+                local.search(addressname);*/
+            },
+            //重置地图
+            resetMap(address){
+                this.formData.address=address.address;
+                this.formData.coordinate=address.point.lng +","+ address.point.lat;
+                //标记地图
+                var point= new BMap.Point(address.point.lng,address.point.lat);
+                var marker = new BMap.Marker(point);
+                map.addOverlay(marker);
+                map.centerAndZoom(point,15);
+                /*//创建标注点
+                var point = new BMap.Point(address.point.lng, address.point.lat);
+                map.centerAndZoom(point, 15);
+                var marker = new BMap.Marker(point);        // 创建标注
+                // 将标注添加到地图中
+                map.addOverlay(marker);
+
+                //设置经纬度
+                this.formData.coordinate = address.point.lng + ", " + address.point.lat
+                //设置地址
+                this.formData.address = address.address;*/
+            },
+
+            initMap2(lng, lat) {
+                map = new BMap.Map("allmap2");
+                var loaction=this.formData.coordinate.split(",");
+                lng=loaction[0];
+                lat=loaction[1];
+                var point = new BMap.Point(lng, lat);   //
+                map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
+                map.centerAndZoom(point, 15);
+
+                /*function myFun(result) {
+                    var cityName = result.name;
+                    map.setCenter(cityName);
+                }*/
+
+                var mk = new BMap.Marker(point);    //创建标注对象
+                map.addOverlay(mk); //添加标注到地图中
+
+                var geoc = new BMap.Geocoder();
+                map.addEventListener("click",function(e){    //给地图添加点击事件
+                    //实体化地图
+                    //map.centerAndZoom(this.point,12);
+                    map.clearOverlays();
+                    //console.log(e);
+                    //创建标注位置
+                    var pt = new BMap.Point(e.point.lng, e.point.lat);
+                    // 创建标注
+                    var marker = new BMap.Marker(pt);
+                    //marker.enableDragging();    //拖动标记
+                    map.addOverlay(marker);       // 将标注添加到地图中
+                    //封装经纬度
+                    vue.$set(vue.formData,"coordinate",e.point.lng + "," +e.point.lat);
+                    geoc.getLocation(pt, function(rs){
+                        //封装地址
+                        if (rs){
+                            vue.$set(vue.formData,"address",rs.address);
+                        }
+                        //alert(rs);
+                        //console.log(rs)
+
+                    });
+
+                    /*var options = {
+                        onSearchComplete: function (results){
+                            if (this.getStatus() == BMAP_STATUS_SUCCESS) {
+                                var s = [];
+                                for (let i = 0; i < results.getCurrentNumPois(); i++) {
+                                    s.push(results.getPoi(i).title + "," + results.getPoi(i).address);
+                                }
+                            }
+                            viewthis.addressList=s;
+                        }
+                    };
+                    var local=new BMap.LocalSearch(map,options);
+                    local.search(viewthis.formData.address);*/
+                });
+
+            },
+            //编辑
+            handleEdit() {
+                //发送ajax请求完成更新
+                var url = "/address/edit";
+                axios.put(url, this.formData).then(response => {
+                    if (response.data.flag) {
+                        //隐藏弹出框
+                        this.updateFormVisible = false;
+                        this.$message.success(response.data.message);
+                        return;
+                    }
+                    this.$message.error(response.data.message);
+                }).finally(() => {
+                    this.findPage();
+                })
+            },
+
+            initMap1(lng, lat) {
+                map = new BMap.Map("allmap1");
+                var point = new BMap.Point(114.306617, 30.587245);
+                map.enableScrollWheelZoom(true);     //开启鼠标滚轮缩放
+                map.centerAndZoom(point, 12);
+
+                /*function myFun(result) {
+                    var cityName = result.name;
+                    map.setCenter(cityName);
+                }*/
+
+                //定位到当前位置
+                var geolocation = new BMap.Geolocation();
+                geolocation.getCurrentPosition(function (r) {
+                    if (this.getStatus() == BMAP_STATUS_SUCCESS) {
+                        var mk = new BMap.Marker(r.point);
+                        map.addOverlay(mk);
+                        map.panTo(r.point);
+                        map.centerAndZoom(r.point, 12);
+                    }
+                })
+
+                //const  viewthis= this;  //设置全局变量
+
+                var geoc = new BMap.Geocoder();
+                map.addEventListener("click",function(e){    //给地图添加点击事件
+                    //实体化地图
+                    map.centerAndZoom(this.point,12);
+                    map.clearOverlays();
+                    //console.log(e);
+                    //创建标注位置
+                    var pt = new BMap.Point(e.point.lng, e.point.lat);
+                    // 创建标注
+                    var marker = new BMap.Marker(pt);
+                    //marker.enableDragging();    //拖动标记
+                    map.addOverlay(marker);       // 将标注添加到地图中
+
+                    //封装经纬度
+                    geoc.getLocation(pt, function(rs){
+                        //封装地址
+                        if (rs){
+                            vue.$set(vue.formData,"address",rs.address);
+                        }
+                        //alert(rs);
+                        //console.log(rs)
+                    });
+                    vue.$set(vue.formData, "coordinate", e.point.lng + ", " + e.point.lat)
+                    /*var options = {
+                        onSearchComplete: function (results){
+                            if (this.getStatus() == BMAP_STATUS_SUCCESS) {
+                                var s = [];
+                                for (let i = 0; i < results.getCurrentNumPois(); i++) {
+                                    s.push(results.getPoi(i).title + "," + results.getPoi(i).address);
+                                }
+                            }
+                            viewthis.addressList=s;
+                            alert(s);
+                        }
+                    };
+                    var local=new BMap.LocalSearch(map,options);
+                    local.search(viewthis.formData.address);*/
+                });
+
+            },
+            //添加
+            handleSubmit() {
+                //发送异步请求
+                var url = "/address/submit";
+                axios.post(url, this.formData).then(response => {
+                    if (response.data.flag) {
+                        //隐藏弹出框
+                        this.dialogFormVisible = false;
+                        this.$message.success(response.data.message);
+                        return;
+                    }
+                    this.$message.error(response.data.message);
+                }).finally(() => {
+                    //重新查询分页信息
+                    this.findPage();
+                })
+            },
+            //删除
+            handleDelete(row) {
+                this.$confirm("您确定要删除此记录吗?", "提示", {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    //发送异步请求, 删除检查组
+                    axios.delete("/address/delete/" + row.id).then(response => {
+                        if (response.data.flag) {
+                            this.$message.success(response.data.message);
+                            return;
+                        }
+                        this.$message.error(response.data.message);
+                    }).finally(() => {
+                        this.findPage();
+                    })
+                })
+            },
+
+            // 重置表单
+            resetForm() {
+                this.formData = {};
+            },
+            // 弹出添加窗口
+            handleCreate() {
+                //重置表单数据
+                this.resetForm();
+                //展示新增弹出框
+                this.dialogFormVisible = true;
+            },
+            // 弹出编辑窗口
+            handleUpdate(row) {
+                this.resetForm();
+                //查询检查组基本信息
+                axios.get("/address/" + row.id).then(response => {
+                    if (!response.data.flag) {
+                        this.$message.error(response.data.message);
+                        return;
+                    }
+
+                    this.updateFormVisible = true;
+
+                    this.formData = response.data.data;
+                });
+            }
+        }
+    });
+
+</script>
+</html>

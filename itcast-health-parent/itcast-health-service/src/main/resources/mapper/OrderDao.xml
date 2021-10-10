@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.itcast.dao.OrderDao">
+    <resultMap id="BaseResultMap" type="cn.itcast.pojo.Order">
+        <id column="id" jdbcType="VARCHAR" property="id"/>
+        <result column="setmealId" jdbcType="INTEGER" property="setmealId"/>
+        <result column="addressId" jdbcType="INTEGER" property="addressId"/>
+        <association
+                property="member"
+                column="memberId"
+                javaType="cn.itcast.pojo.Member"
+                select="cn.itcast.dao.MemberDao.findById"
+        />
+        <association
+                property="setmeal"
+                column="setmealId"
+                javaType="cn.itcast.pojo.Setmeal"
+                select="cn.itcast.dao.SetmealDao.findById"
+        />
+        <association
+                property="address"
+                column="addressId"
+                javaType="cn.itcast.pojo.Address"
+                select="cn.itcast.dao.AddressDao.findById"
+        />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, memberId, orderDate , orderType , orderStatus , setmealId , arrival , phoneNumber ,
+        name , idCard , birthday , IF(sex = 1,'男','女') as sex, married , addressId , payStatus
+    </sql>
+    <!-- Order findById(String id);-->
+    <select id="findById" parameterType="String" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from
+            t_order
+        <where>
+            id = #{id}
+        </where>
+    </select>
+
+    <!-- Page<Order> findByCondition(OrderQueryPageBean orderQueryPageBean);-->
+    <select id="findByCondition" parameterType="cn.itcast.entity.OrderQueryPageBean" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List"/>
+        from
+            t_order
+        <where>
+            <if test=" orderQueryPageBean.orderType!=null ">
+                and orderType like "%"#{orderQueryPageBean.orderType}"%"
+            </if>
+            <if test=" orderQueryPageBean.payStatus!=null ">
+                and payStatus = #{orderQueryPageBean.payStatus}
+            </if>
+            <if test=" orderQueryPageBean.minTime!=null and orderQueryPageBean.minTime!=''">
+                and orderDate &gt;= #{orderQueryPageBean.minTime}
+            </if>
+            <if test=" orderQueryPageBean.maxTime!=null and orderQueryPageBean.maxTime!=''">
+                and orderDate &lt;= #{orderQueryPageBean.maxTime}
+            </if>
+            <if test=" orderQueryPageBean.queryString!=null and orderQueryPageBean.queryString.length>0 ">
+                and phoneNumber like "%"#{orderQueryPageBean.queryString}"%"
+                or name like "%"#{orderQueryPageBean.queryString}"%"
+                or idCard like "%"#{orderQueryPageBean.queryString}"%"
+            </if>
+        </where>
+    </select>
+
+    <!--int updateById(@Param("arrival") Integer arrival, @Param("id") Integer id);-->
+    <update id="updateById" parameterType="String" >
+        update
+            t_order
+        <set>
+            arrival = #{arrival} ,
+        </set>
+        <where>
+            id = #{id}
+        </where>
+    </update>
+
+    <!--保存order数据Boolean updateOrder(Order order);-->
+    <update id="updateOrder" parameterType="cn.itcast.pojo.Order">
+        update t_order
+        <set>
+            memberId = #{order.memberId},
+            orderDate = #{order.orderDate},
+            orderType = #{order.orderType},
+            orderStatus = #{order.orderStatus},
+            setmealId = #{order.setmealId},
+            arrival = #{order.arrival},
+            phoneNumber = #{order.phoneNumber},
+            name = #{order.name},
+            idCard = #{order.idCard},
+            birthday = #{order.birthday},
+            sex = #{order.sex},
+            married = #{order.married},
+            addressId = #{order.addressId},
+            payStatus = #{order.payStatus},
+        </set>
+        <where>
+            id = #{order.id}
+        </where>
+    </update>
+
+    <!--新增order-->
+    <insert id="saveOrder" parameterType="cn.itcast.pojo.Order">
+        insert into t_order
+        values (#{order.id},#{order.memberId},#{order.orderDate},#{order.orderType},
+                #{order.orderStatus},#{order.setmealId},#{order.arrival},
+                #{order.phoneNumber},#{order.name},#{order.idCard},
+                #{order.birthday},#{order.sex},#{order.married},
+                #{order.addressId},#{order.payStatus})
+    </insert>
+
+    <!--Boolean deleteById(Integer id);-->
+    <delete id="deleteById" parameterType="String">
+        delete from t_order where id = #{id}
+    </delete>
+</mapper>

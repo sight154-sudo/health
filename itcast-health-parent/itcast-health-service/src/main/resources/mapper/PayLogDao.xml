@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="cn.itcast.dao.PayLogDao">
+    <insert id="insertPaylog" parameterType="cn.itcast.pojo.PayLog">
+        insert into t_paylog(orderId,transactionId,money,payStatus,payTime,createTime)
+        values (#{orderId},#{transactionId},#{money},#{payStatus},#{payTime},#{createTime})
+    </insert>
+    <update id="updatePaylog" parameterType="cn.itcast.pojo.PayLog">
+        update t_paylog set transactionId = #{transactionId},money = #{money},payStatus=#{payStatus},
+                    payTime = #{payTime},createTime = #{createTime} where orderId = #{orderId}
+
+    </update>
+    <select id="findPayLogByOid" parameterType="java.lang.String" resultType="cn.itcast.pojo.PayLog">
+        select * from t_paylog where orderId = #{orderId}
+    </select>
+</mapper>
